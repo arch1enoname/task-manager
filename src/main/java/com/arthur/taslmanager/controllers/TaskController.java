@@ -1,7 +1,10 @@
 package com.arthur.taslmanager.controllers;
 
+import com.arthur.taslmanager.dtos.CommentDto;
+import com.arthur.taslmanager.dtos.PerformerTaskDto;
 import com.arthur.taslmanager.dtos.TaskDto;
 import com.arthur.taslmanager.entities.Task;
+import com.arthur.taslmanager.services.CommentService;
 import com.arthur.taslmanager.services.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +43,7 @@ public class TaskController {
             @ApiResponse(responseCode = "404", description = "Task not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> deleteTaskById(
             @Parameter(
                     description = "ID of the task to delete",
@@ -61,6 +66,7 @@ public class TaskController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Task> createTask(
             @Parameter(
                     description = "Task data transfer object",
@@ -71,7 +77,7 @@ public class TaskController {
         return new ResponseEntity<>(taskService.createNewTask(taskDto), HttpStatus.CREATED);
     }
 
-    @PostMapping("/setPerformer/{taskId}/{userId}")
+    @PatchMapping("/updatePerformer")
     @Operation(
             summary = "Set performer to task",
             description = "Set performer tto task"
@@ -81,14 +87,22 @@ public class TaskController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Task> setPerformer(@PathVariable Long taskId, @PathVariable Long userId) {
-        taskService.setPerformer(taskId, userId);
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<Task> setPerformer(@RequestBody PerformerTaskDto performerTaskDto) {
+        taskService.updatePerformer(performerTaskDto);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/getByAuthorUsername/{username}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<Task>> getTasksByAuthorUsername(@PathVariable String username) {
         return new ResponseEntity<>(taskService.findByAuthorUsername(username), HttpStatus.OK);
+    }
+
+    @PostMapping("/{taskId}")
+    public ResponseEntity<?> addCommentToTask(@PathVariable Long taskId, @RequestBody CommentDto commentDto) {
+        taskService.addCommentToTask(taskId, commentDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
 

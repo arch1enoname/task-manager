@@ -5,6 +5,7 @@ import com.arthur.taslmanager.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Cascade;
 
 import java.util.List;
 
@@ -43,6 +44,6 @@ public class Task {
     @Enumerated(EnumType.STRING)
     Priority priority;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Comment> commentList;
 }

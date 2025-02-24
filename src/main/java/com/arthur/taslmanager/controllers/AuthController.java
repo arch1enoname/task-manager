@@ -2,9 +2,10 @@ package com.arthur.taslmanager.controllers;
 
 import com.arthur.taslmanager.dtos.JwtRequest;
 import com.arthur.taslmanager.dtos.JwtResponse;
-import com.arthur.taslmanager.dtos.UserDto;
 import com.arthur.taslmanager.dtos.UserRegisterDto;
+import com.arthur.taslmanager.entities.Role;
 import com.arthur.taslmanager.exceptions.AppError;
+import com.arthur.taslmanager.repositories.RoleRepository;
 import com.arthur.taslmanager.services.UserService;
 import com.arthur.taslmanager.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
@@ -27,14 +25,17 @@ public class AuthController {
     private final UserService userService;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
+    private final RoleRepository roleRepository;
 
     @Autowired
     public AuthController(UserService userService,
                           JwtUtils jwtUtils,
-                          AuthenticationManager authenticationManager) {
+                          AuthenticationManager authenticationManager,
+                          RoleRepository roleRepository) {
         this.userService = userService;
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
+        this.roleRepository = roleRepository;
     }
 
     @PostMapping

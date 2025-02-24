@@ -55,9 +55,9 @@ public class UserServiceImpl implements UserService {
     public UserDto createNewUser(UserRegisterDto userRegisterDto) {
 
         User user = User.builder()
-                .username(userRegisterDto.getUsername())
+                .username(userRegisterDto.getEmail())
                 .email(userRegisterDto.getEmail())
-                .roles(List.of(roleService.findByName("ROLE_USER")))
+                .roles(List.of(roleService.findByName("ROLE_ADMIN")))
                 .password(passwordEncoder.encode(userRegisterDto.getPassword()))
                 .build();
 

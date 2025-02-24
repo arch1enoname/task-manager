@@ -1,12 +1,16 @@
 package com.arthur.taslmanager.services.impls;
 
+import com.arthur.taslmanager.dtos.CommentDto;
+import com.arthur.taslmanager.dtos.PerformerTaskDto;
 import com.arthur.taslmanager.dtos.TaskDto;
 import com.arthur.taslmanager.dtos.TaskResponseDto;
 import com.arthur.taslmanager.entities.Comment;
+import com.arthur.taslmanager.entities.Role;
 import com.arthur.taslmanager.entities.Task;
 import com.arthur.taslmanager.entities.User;
 import com.arthur.taslmanager.enums.Status;
 import com.arthur.taslmanager.repositories.TaskRepository;
+import com.arthur.taslmanager.services.CommentService;
 import com.arthur.taslmanager.services.TaskService;
 import com.arthur.taslmanager.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +26,13 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final UserService userService;
+    private final CommentService commentService;
 
     @Autowired
-    public TaskServiceImpl(TaskRepository taskRepository, UserService userService) {
+    public TaskServiceImpl(TaskRepository taskRepository, UserService userService, CommentService commentService) {
         this.taskRepository = taskRepository;
         this.userService = userService;
+        this.commentService = commentService;
     }
 
     @Override
@@ -45,7 +51,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void changeTaskStatus(Long id, Status status) {
-        Task task = findTaskById(id);
+        Task task = getTaskById(id);
         task.setStatus(status);
         taskRepository.save(task);
     }
@@ -58,14 +64,6 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponseDto updateTaskById(Long id, TaskDto taskDto) {
         return null;
-    }
-
-    @Override
-    public void setPerformer(Long taskId, Long userId) {
-        User user =  userService.getUserById(userId);
-        Task task = findTaskById(taskId);
-        task.setPerformer(user);
-        taskRepository.save(task);
     }
 
     @Override
@@ -83,19 +81,30 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.findByAuthorUsername(username);
     }
 
-    private Task findTaskById(Long id) {
-        Optional<Task> optionalTask = taskRepository.findById(id);
-        if (optionalTask.isPresent()) {
-            return optionalTask.get();
-        } else {
-            throw new RuntimeException("123");
-        }
+    @Override
+    public void updatePerformer(PerformerTaskDto performerTaskDto) {
+        Task task = getTaskById(performerTaskDto.getTaskId());
+        User user = userService.getUserById(performerTaskDto.getPerformerId());
+        task.setPerformer(user);
+        taskRepository.save(task);
     }
 
     @Override
-    public void addCommentToTask(Long id, Comment comment) {
-        Task task = getTaskById(id);
-        task.getCommentList().add(comment);
-        taskRepository.save(task);
+    public void addCommentToTask(Long taskId, CommentDto commentDto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Task task = getTaskById(taskId);
+        User user = userService.findByUsername(auth.getName());
+        List<String> roles = user.getRoles().stream()
+                .map(Role::getName)
+                .toList();
+        Comment comment = commentService.createComment(commentDto);
+
+
+        if (roles.contains("ROLE_ADMIN") || task.getPerformer().equals(user)) {
+            task.getCommentList().add(comment);
+        } else {
+            throw new RuntimeException("123");
+        }
+
     }
 }

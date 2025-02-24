@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Entity
 @Data
-@Table(name = "tasks")
+@Table(name = "comments")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
