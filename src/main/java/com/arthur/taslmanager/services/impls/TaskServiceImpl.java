@@ -9,6 +9,8 @@ import com.arthur.taslmanager.entities.Role;
 import com.arthur.taslmanager.entities.Task;
 import com.arthur.taslmanager.entities.User;
 import com.arthur.taslmanager.enums.Status;
+import com.arthur.taslmanager.exceptions.InvalidUserException;
+import com.arthur.taslmanager.exceptions.TaskNotFoundException;
 import com.arthur.taslmanager.repositories.TaskRepository;
 import com.arthur.taslmanager.services.CommentService;
 import com.arthur.taslmanager.services.TaskService;
@@ -18,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,10 +53,10 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void changeTaskStatus(Long id, Status status) {
+    public Task changeTaskStatus(Long id, Status status) {
         Task task = getTaskById(id);
         task.setStatus(status);
-        taskRepository.save(task);
+        return taskRepository.save(task);
     }
 
     @Override
@@ -72,13 +75,14 @@ public class TaskServiceImpl implements TaskService {
         if (optionalTask.isPresent()) {
             return optionalTask.get();
         } else {
-            throw new RuntimeException("123");
+            throw new TaskNotFoundException("Task not found");
         }
     }
 
     @Override
-    public List<Task> findByAuthorUsername(String username) {
-        return taskRepository.findByAuthorUsername(username);
+    public List<TaskResponseDto> findByAuthorUsername(String username) {
+        List<Task> tasks = taskRepository.findByAuthorUsername(username);
+        return fromEntityToDto(tasks);
     }
 
     @Override
@@ -90,6 +94,35 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public void updateTaskStatus(Long id, Status status) {
+        Task task = getTaskById(id);
+        task.setStatus(status);
+        taskRepository.save(task);
+    }
+
+    @Override
+    public List<TaskResponseDto> getTaskByPerformerUsername(String username) {
+        List<Task> tasks = taskRepository.findByPerformerUsername(username);
+        return fromEntityToDto(tasks);
+
+
+    }
+
+    @Override
+    public TaskResponseDto getTaskResponseById(Long id) {
+        Task task = getTaskById(id);
+        return TaskResponseDto.builder()
+                .title(task.getTitle())
+                .performerUsername(task.getPerformer().getUsername())
+                .authorUsername(task.getAuthor().getUsername())
+                .status(task.getStatus())
+                .description(task.getDescription())
+                .priority(task.getPriority())
+                .commentList(task.getCommentList().stream().map(commentService::getCommentResponse).toList())
+                .build();
+    }
+
+    @Override
     public void addCommentToTask(Long taskId, CommentDto commentDto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Task task = getTaskById(taskId);
@@ -97,14 +130,32 @@ public class TaskServiceImpl implements TaskService {
         List<String> roles = user.getRoles().stream()
                 .map(Role::getName)
                 .toList();
-        Comment comment = commentService.createComment(commentDto);
-
 
         if (roles.contains("ROLE_ADMIN") || task.getPerformer().equals(user)) {
+            Comment comment = commentService.createComment(commentDto);
             task.getCommentList().add(comment);
+            taskRepository.save(task);
         } else {
-            throw new RuntimeException("123");
+            throw new InvalidUserException("User don`t have permission");
         }
+    }
 
+    private List<TaskResponseDto> fromEntityToDto(List<Task> tasks) {
+        List<TaskResponseDto> taskResponse = new ArrayList<>();
+
+        for(Task task : tasks) {
+            taskResponse.add(
+                    TaskResponseDto.builder()
+                            .title(task.getTitle())
+                            .performerUsername(task.getPerformer().getUsername())
+                            .authorUsername(task.getAuthor().getUsername())
+                            .status(task.getStatus())
+                            .description(task.getDescription())
+                            .priority(task.getPriority())
+                            .commentList(task.getCommentList().stream().map(commentService::getCommentResponse).toList())
+                            .build()
+            );
+        }
+        return taskResponse;
     }
 }

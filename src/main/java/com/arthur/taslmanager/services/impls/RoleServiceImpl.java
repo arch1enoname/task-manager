@@ -1,6 +1,7 @@
 package com.arthur.taslmanager.services.impls;
 
 import com.arthur.taslmanager.entities.Role;
+import com.arthur.taslmanager.exceptions.RoleNotFoundException;
 import com.arthur.taslmanager.repositories.RoleRepository;
 import com.arthur.taslmanager.services.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class RoleServiceImpl implements RoleService {
         if (optionalRole.isPresent()) {
             return optionalRole.get();
         } else {
-            throw new RuntimeException("123");
+            throw new RoleNotFoundException("Role with name" + name + "doesn`t exist");
         }
     }
 }

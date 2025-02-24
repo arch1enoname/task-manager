@@ -1,9 +1,11 @@
 package com.arthur.taslmanager.dtos;
 
-import com.arthur.taslmanager.entities.User;
+import com.arthur.taslmanager.enums.Priority;
 import com.arthur.taslmanager.enums.Status;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -13,7 +15,9 @@ import lombok.experimental.FieldDefaults;
 public class TaskResponseDto {
     String title;
     String description;
-    User author;
-    User performer;
+    String authorUsername;
+    String performerUsername;
     Status status;
+    Priority priority;
+    List<CommentResponseDto> commentList;
 }

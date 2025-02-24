@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService {
         if(optionalUser.isPresent()) {
             return optionalUser.get();
         } else {
-            throw new RuntimeException("123");
+            throw new UsernameNotFoundException("User doesn`t exist");
         }
     }
 }

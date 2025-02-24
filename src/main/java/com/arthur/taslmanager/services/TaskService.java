@@ -12,11 +12,14 @@ import java.util.List;
 
 public interface TaskService {
     Task createNewTask(TaskDto taskdto);
-    void changeTaskStatus(Long id, Status status);
+    Task changeTaskStatus(Long id, Status status);
     void deleteTaskById(Long id);
     TaskResponseDto updateTaskById(Long id, TaskDto taskDto);
     Task getTaskById(Long id);
-    List<Task> findByAuthorUsername(String username);
+    List<TaskResponseDto> findByAuthorUsername(String username);
     void addCommentToTask(Long id, CommentDto commentDto);
     void updatePerformer(PerformerTaskDto performerTaskDto);
+    void updateTaskStatus(Long id, Status status);
+    List<TaskResponseDto> getTaskByPerformerUsername(String username);
+    TaskResponseDto getTaskResponseById(Long id);
 }

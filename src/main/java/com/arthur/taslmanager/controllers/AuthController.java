@@ -3,11 +3,12 @@ package com.arthur.taslmanager.controllers;
 import com.arthur.taslmanager.dtos.JwtRequest;
 import com.arthur.taslmanager.dtos.JwtResponse;
 import com.arthur.taslmanager.dtos.UserRegisterDto;
-import com.arthur.taslmanager.entities.Role;
-import com.arthur.taslmanager.exceptions.AppError;
-import com.arthur.taslmanager.repositories.RoleRepository;
 import com.arthur.taslmanager.services.UserService;
 import com.arthur.taslmanager.utils.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,33 +18,34 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "APIs for user authentication and registration")
 public class AuthController {
     private final UserService userService;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
-    private final RoleRepository roleRepository;
 
     @Autowired
     public AuthController(UserService userService,
                           JwtUtils jwtUtils,
-                          AuthenticationManager authenticationManager,
-                          RoleRepository roleRepository) {
+                          AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
-        this.roleRepository = roleRepository;
     }
 
     @PostMapping
+    @Operation(summary = "Authenticate user", description = "Generates JWT token for authenticated users")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User authenticated successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid username or password")
+    })
     public ResponseEntity<?> createAuthToken(@RequestBody JwtRequest authRequest) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
         } catch (BadCredentialsException e) {
-            return new ResponseEntity<>(new AppError(HttpStatus.UNAUTHORIZED.value(), "Uncorrected login or password"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         UserDetails userDetails = userService.loadUserByUsername(authRequest.getUsername());
         String token = jwtUtils.generateToken(userDetails);
@@ -51,6 +53,11 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Register new user", description = "Creates a new user account")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data")
+    })
     public ResponseEntity<?> createNewUser(@RequestBody UserRegisterDto userRegisterDto) {
         return ResponseEntity.ok(userService.createNewUser(userRegisterDto));
     }

@@ -19,7 +19,8 @@ public class Comment {
     @Column(name = "id")
     Long id;
 
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "author_id")
     User author;
 
     @Column(name = "date")

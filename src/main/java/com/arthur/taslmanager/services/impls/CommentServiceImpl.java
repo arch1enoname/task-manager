@@ -1,9 +1,12 @@
 package com.arthur.taslmanager.services.impls;
 
 import com.arthur.taslmanager.dtos.CommentDto;
+import com.arthur.taslmanager.dtos.CommentResponseDto;
 import com.arthur.taslmanager.entities.Comment;
 import com.arthur.taslmanager.entities.Role;
 import com.arthur.taslmanager.entities.User;
+import com.arthur.taslmanager.exceptions.CommentNotFoundException;
+import com.arthur.taslmanager.exceptions.InvalidUserException;
 import com.arthur.taslmanager.repositories.CommentRepository;
 import com.arthur.taslmanager.services.CommentService;
 import com.arthur.taslmanager.services.UserService;
@@ -45,7 +48,7 @@ public class CommentServiceImpl implements CommentService {
         if (checkPermissions(id)) {
             commentRepository.deleteById(id);
         } else {
-            throw new RuntimeException("123");
+            throw new InvalidUserException("User don`t have permission to this");
         }
     }
 
@@ -56,7 +59,7 @@ public class CommentServiceImpl implements CommentService {
             comment.setText(commentDto.getText());
             return commentRepository.save(comment);
         } else {
-            throw new RuntimeException("123");
+            throw new InvalidUserException("User don`t have permission to this");
         }
     }
 
@@ -66,8 +69,16 @@ public class CommentServiceImpl implements CommentService {
         if (optionalComment.isPresent()) {
             return optionalComment.get();
         } else {
-            throw new RuntimeException("123");
+            throw new CommentNotFoundException("Comment not found with id: " + id);
         }
+    }
+
+    @Override
+    public CommentResponseDto getCommentResponse(Comment comment) {
+        return CommentResponseDto.builder()
+                .text(comment.getText())
+                .author(comment.getAuthor().getUsername())
+                .build();
     }
 
     private boolean checkPermissions(Long id) {
